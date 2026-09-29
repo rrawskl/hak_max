@@ -1,0 +1,78 @@
+[
+  {
+    "id": "equipment", "title": "Учебная компенсация оборудования", "purpose_code": "equipment", "benefit_type": "субсидия",
+    "amount_text": "до 700 000 ₽", "deadline_days": 90, "state": "open",
+    "description": "Вымышленный пример компенсации части расходов на оборудование.",
+    "documents": ["Описание проекта", "Смета оборудования", "Подтверждение расходов"],
+    "rules": [
+      {"field": "employee_count", "operator": "lte", "expected": 30, "required": true, "explanation": "Не более 30 сотрудников"},
+      {"field": "business_age_months", "operator": "gte", "expected": 12, "required": true, "explanation": "Бизнесу не менее 12 полных месяцев"},
+      {"field": "tax_debt", "operator": "eq", "expected": "no", "required": true, "explanation": "Нет налоговой задолженности"}
+    ]
+  },
+  {
+    "id": "startup", "title": "Учебный стартовый грант", "purpose_code": "development", "benefit_type": "грант",
+    "amount_text": "до 500 000 ₽", "deadline_days": 60, "state": "open",
+    "description": "Вымышленная программа для недавно зарегистрированного бизнеса.",
+    "documents": ["Бизнес-план", "Смета запуска"],
+    "rules": [
+      {"field": "business_age_months", "operator": "lte", "expected": 12, "required": true, "explanation": "Бизнесу не более 12 полных месяцев"},
+      {"field": "employee_count", "operator": "lte", "expected": 15, "required": true, "explanation": "Не более 15 сотрудников"}
+    ]
+  },
+  {
+    "id": "digital", "title": "Учебная цифровизация", "purpose_code": "digital", "benefit_type": "софинансирование",
+    "amount_text": "до 300 000 ₽", "deadline_days": 120, "state": "open",
+    "description": "Вымышленное софинансирование цифровых сервисов.",
+    "documents": ["Описание цифрового проекта", "Смета внедрения"],
+    "rules": [
+      {"field": "employee_count", "operator": "lte", "expected": 30, "required": true, "explanation": "Не более 30 сотрудников"},
+      {"field": "revenue", "operator": "gte", "expected": 100000, "required": true, "explanation": "Выручка от 100 000 ₽"}
+    ]
+  },
+  {
+    "id": "manufacturing", "title": "Учебная поддержка производства", "purpose_code": "equipment", "benefit_type": "субсидия",
+    "amount_text": "до 1 000 000 ₽", "deadline_days": 45, "state": "open",
+    "description": "Вымышленная программа для производственного бизнеса.",
+    "documents": ["Производственный план", "Смета"],
+    "rules": [
+      {"field": "industry_code", "operator": "in", "expected": ["manufacturing", "production"], "required": true, "explanation": "Производственная отрасль"},
+      {"field": "business_age_months", "operator": "gte", "expected": 24, "required": true, "explanation": "Бизнесу не менее 24 полных месяцев"}
+    ]
+  },
+  {
+    "id": "consulting", "title": "Учебная консультационная поддержка", "purpose_code": "development", "benefit_type": "консультация",
+    "amount_text": null, "deadline_days": null, "state": "open",
+    "description": "Вымышленная программа без суммы и срока подачи.",
+    "documents": ["Описание запроса"],
+    "rules": [{"field": "employee_count", "operator": "lte", "expected": 30, "required": true, "explanation": "Не более 30 сотрудников"}]
+  },
+  {
+    "id": "export", "title": "Учебная подготовка к экспорту", "purpose_code": "development", "benefit_type": "обучение",
+    "amount_text": null, "deadline_days": 150, "state": "open",
+    "description": "Вымышленная программа обучения экспортной деятельности.",
+    "documents": ["Описание продукта", "План выхода на рынок"],
+    "rules": [
+      {"group": "any", "required": true, "explanation": "ИП или ООО", "rules": [
+        {"field": "legal_form", "operator": "eq", "expected": "ip", "required": true, "explanation": "ИП"},
+        {"field": "legal_form", "operator": "eq", "expected": "ooo", "required": true, "explanation": "ООО"}
+      ]}
+    ]
+  },
+  {
+    "id": "social", "title": "Учебная поддержка социального проекта", "purpose_code": "development", "benefit_type": "грант",
+    "amount_text": "до 250 000 ₽", "deadline_days": 75, "state": "open",
+    "description": "Вымышленный пример программы с дополнительным отраслевым условием.",
+    "documents": ["Описание социального эффекта", "Бюджет"],
+    "rules": [
+      {"field": "industry_code", "operator": "eq", "expected": "social", "required": true, "explanation": "Социальная отрасль"}
+    ]
+  },
+  {
+    "id": "closed-example", "title": "Учебная завершённая программа", "purpose_code": "digital", "benefit_type": "субсидия",
+    "amount_text": "до 100 000 ₽", "deadline_days": -10, "state": "closed",
+    "description": "Вымышленный закрытый приём для демонстрации статуса.",
+    "documents": ["Заявление"],
+    "rules": [{"field": "employee_count", "operator": "lte", "expected": 30, "required": true, "explanation": "Не более 30 сотрудников"}]
+  }
+]

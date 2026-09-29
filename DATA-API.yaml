@@ -1,12 +1,14 @@
 schemaVersion: "1.0"
+# Черновик: точная схема организаторов и публичный HTTPS URL не предоставлены.
+status: "draft"
 
 solution:
   name: "ДЕЛО"
   teamId: "replace-before-submission"
 
 api:
-  # Replace with the deployed public HTTPS backend URL before automated review.
-  baseUrl: "https://delo.example.org"
+  # Не отправлять на проверку до замены фактическим HTTPS URL.
+  baseUrl: "https://REPLACE-WITH-ACTUAL-HOST"
   openapi: "./openapi.yaml"
   defaultHeaders:
     Accept: "application/json"
@@ -27,13 +29,13 @@ checks:
 
   - id: "demo-session"
     name: "Получение demo сессии"
-    description: "В development возвращает локального demo пользователя без секретов."
+    description: "Только development с DEV_AUTH_ENABLED=true; исключить из production проверки."
     method: "POST"
-    path: "/api/v1/session/max"
+    path: "/api/v1/auth/demo"
     role: "public"
     expected:
       statusCodes: [200]
       contentType: "application/json"
-      requiredFields: ["user_id", "mode"]
+      requiredFields: ["token", "mode", "expires_at"]
     timeoutMs: 5000
     repeatable: true

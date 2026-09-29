@@ -1,114 +1,644 @@
 openapi: 3.1.0
 info:
   title: ДЕЛО API
-  version: 0.1.0
-  description: API MVP для подбора мер поддержки малому бизнесу.
-servers:
-  - url: https://delo.example.org
-  - url: http://localhost:8000
+  version: 0.2.0
 paths:
   /health/live:
     get:
-      summary: Проверка живости процесса
+      summary: Live
+      operationId: live_health_live_get
       responses:
         '200':
-          description: API доступен
+          description: Successful Response
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/Health'
+              schema: {}
   /health/ready:
     get:
-      summary: Проверка готовности базы данных
+      summary: Ready
+      operationId: ready_health_ready_get
       responses:
         '200':
-          description: База данных доступна
-  /api/v1/session/max:
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/auth/max:
     post:
-      summary: Создаёт или получает demo сессию
+      summary: Auth Max
+      operationId: auth_max_api_v1_auth_max_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaxAuthIn'
+        required: true
       responses:
         '200':
-          description: Сессия получена
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
           content:
             application/json:
               schema:
-                type: object
-                required: [user_id, mode]
-                properties:
-                  user_id: {type: string}
-                  mode: {type: string}
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/demo:
+    post:
+      summary: Auth Demo
+      operationId: auth_demo_api_v1_auth_demo_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/me:
+    get:
+      summary: Me
+      operationId: me_api_v1_me_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - HTTPBearer: []
   /api/v1/profile:
     get:
-      summary: Возвращает профиль пользователя
+      summary: Get Profile
+      operationId: get_profile_api_v1_profile_get
       responses:
-        '200': {description: Профиль или null}
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - HTTPBearer: []
     put:
-      summary: Создаёт или обновляет профиль
+      summary: Put Profile
+      operationId: put_profile_api_v1_profile_put
       requestBody:
-        required: true
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/Profile'}
+            schema:
+              $ref: '#/components/schemas/ProfileIn'
+        required: true
       responses:
-        '200': {description: Профиль сохранён}
-        '422': {description: Ошибка валидации}
-  /api/v1/support-programs:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /api/v1/programs:
     get:
-      summary: Возвращает ранжированный каталог программ
-      responses:
-        '200': {description: Список программ}
-  /api/v1/support-programs/{program_id}:
-    get:
-      summary: Возвращает программу и объяснение соответствия
+      summary: Programs
+      operationId: programs_api_v1_programs_get
+      security:
+      - HTTPBearer: []
       parameters:
-        - in: path
-          name: program_id
-          required: true
-          schema: {type: string}
+      - name: search
+        in: query
+        required: false
+        schema:
+          type: string
+          maxLength: 120
+          default: ''
+          title: Search
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
+      - name: purpose
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Purpose
       responses:
-        '200': {description: Детали программы}
-        '404': {description: Программа не найдена}
-  /api/v1/plans:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/programs/{program_id}:
     get:
-      summary: Возвращает планы пользователя
+      summary: Program
+      operationId: program_api_v1_programs__program_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: program_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Program Id
       responses:
-        '200': {description: Список планов}
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/dashboard:
+    get:
+      summary: Dashboard
+      operationId: dashboard_api_v1_dashboard_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+      security:
+      - HTTPBearer: []
+  /api/v1/plans:
     post:
-      summary: Создаёт план и чек-лист из программы
+      summary: Create Plan
+      operationId: create_plan_api_v1_plans_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: idempotency-key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Idempotency-Key
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [program_id, deadline]
-              properties:
-                program_id: {type: string}
-                deadline: {type: string, format: date-time}
+              $ref: '#/components/schemas/PlanIn'
       responses:
-        '200': {description: План создан}
-        '404': {description: Программа не найдена}
-        '422': {description: Ошибка валидации}
-  /api/v1/notifications/test:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    get:
+      summary: Plans
+      operationId: plans_api_v1_plans_get
+      security:
+      - HTTPBearer: []
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/plans/{plan_id}:
+    get:
+      summary: Get Plan
+      operationId: get_plan_api_v1_plans__plan_id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Plan Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    patch:
+      summary: Patch Plan
+      operationId: patch_plan_api_v1_plans__plan_id__patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Plan Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanPatch'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/plans/{plan_id}/items/{item_id}:
+    patch:
+      summary: Patch Item
+      operationId: patch_item_api_v1_plans__plan_id__items__item_id__patch
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Plan Id
+      - name: item_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Item Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemPatch'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/plans/{plan_id}/items:
     post:
-      summary: Отправляет тестовое уведомление через Mock MAX
+      summary: Add Item
+      operationId: add_item_api_v1_plans__plan_id__items_post
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Plan Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemCreate'
       responses:
-        '200': {description: Уведомление сохранено}
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/plans/{plan_id}/notifications:
+    get:
+      summary: Notifications
+      operationId: notifications_api_v1_plans__plan_id__notifications_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: plan_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Plan Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/demo/reminder:
+    post:
+      summary: Demo Reminder
+      operationId: demo_reminder_api_v1_demo_reminder_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DemoReminderIn'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /api/v1/integrations/max/webhook:
+    post:
+      summary: Max Webhook
+      operationId: max_webhook_api_v1_integrations_max_webhook_post
+      parameters:
+      - name: x-max-bot-api-secret
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: X-Max-Bot-Api-Secret
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
 components:
   schemas:
-    Health:
-      type: object
-      required: [status]
+    DemoReminderIn:
       properties:
-        status: {type: string, example: ok}
-    Profile:
+        plan_id:
+          type: string
+          title: Plan Id
       type: object
-      required: [legal_form, region, employee_count, business_age_months, purpose]
+      required:
+      - plan_id
+      title: DemoReminderIn
+    HTTPValidationError:
       properties:
-        legal_form: {type: string, enum: [ip, ooo]}
-        region: {type: string, enum: [spb, other]}
-        industry: {type: string}
-        employee_count: {type: integer, minimum: 0}
-        business_age_months: {type: integer, minimum: 0}
-        purpose: {type: string, enum: [equipment, development, digital]}
-        revenue: {type: integer, minimum: 0, nullable: true}
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ItemCreate:
+      properties:
+        version:
+          type: integer
+          minimum: 1.0
+          title: Version
+        title:
+          type: string
+          maxLength: 240
+          minLength: 1
+          title: Title
+      type: object
+      required:
+      - version
+      - title
+      title: ItemCreate
+    ItemPatch:
+      properties:
+        version:
+          type: integer
+          minimum: 1.0
+          title: Version
+        status:
+          type: string
+          enum:
+          - todo
+          - done
+          title: Status
+      type: object
+      required:
+      - version
+      - status
+      title: ItemPatch
+    MaxAuthIn:
+      properties:
+        init_data:
+          type: string
+          maxLength: 8192
+          minLength: 1
+          title: Init Data
+      type: object
+      required:
+      - init_data
+      title: MaxAuthIn
+    PlanIn:
+      properties:
+        program_id:
+          type: string
+          title: Program Id
+        due_at:
+          type: string
+          format: date-time
+          title: Due At
+        reminders_enabled:
+          type: boolean
+          title: Reminders Enabled
+          default: false
+        reminder_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Reminder At
+      type: object
+      required:
+      - program_id
+      - due_at
+      title: PlanIn
+    PlanPatch:
+      properties:
+        version:
+          type: integer
+          minimum: 1.0
+          title: Version
+        status:
+          anyOf:
+          - type: string
+            enum:
+            - active
+            - completed
+            - cancelled
+          - type: 'null'
+          title: Status
+        due_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Due At
+        reminders_enabled:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Reminders Enabled
+        reminder_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Reminder At
+      type: object
+      required:
+      - version
+      title: PlanPatch
+    ProfileIn:
+      properties:
+        business_name:
+          type: string
+          maxLength: 120
+          minLength: 1
+          title: Business Name
+        legal_form:
+          type: string
+          enum:
+          - ip
+          - ooo
+          title: Legal Form
+        region_code:
+          type: string
+          maxLength: 30
+          minLength: 1
+          title: Region Code
+        industry_code:
+          type: string
+          maxLength: 60
+          minLength: 1
+          title: Industry Code
+        employee_count:
+          type: integer
+          maximum: 30.0
+          minimum: 0.0
+          title: Employee Count
+        registration_date:
+          type: string
+          format: date
+          title: Registration Date
+        purpose_code:
+          type: string
+          maxLength: 40
+          minLength: 1
+          title: Purpose Code
+        tax_debt:
+          type: string
+          enum:
+          - 'yes'
+          - 'no'
+          - unknown
+          title: Tax Debt
+          default: unknown
+        revenue:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Revenue
+        version:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          title: Version
+      type: object
+      required:
+      - business_name
+      - legal_form
+      - region_code
+      - industry_code
+      - employee_count
+      - registration_date
+      - purpose_code
+      title: ProfileIn
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    HTTPBearer:
+      type: http
+      scheme: bearer
+servers:
+- url: http://localhost:8000
+  description: Локальная разработка

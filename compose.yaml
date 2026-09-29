@@ -1,27 +1,84 @@
+x-app-env: &app-env
+  APP_ENV: ${APP_ENV:-development}
+  DATABASE_URL: ${DATABASE_URL}
+  PUBLIC_APP_URL: ${PUBLIC_APP_URL}
+  CORS_ORIGINS: ${CORS_ORIGINS}
+  MAX_TOKEN: ${MAX_TOKEN:-}
+  MAX_BOT_NAME: ${MAX_BOT_NAME:-}
+  MAX_WEBHOOK_SECRET: ${MAX_WEBHOOK_SECRET:-}
+  USE_MOCK_MAX: ${USE_MOCK_MAX:-true}
+  DEV_AUTH_ENABLED: ${DEV_AUTH_ENABLED:-false}
+  SEED_DEMO: ${SEED_DEMO:-false}
+  DEMO_BASE_DATE: ${DEMO_BASE_DATE:-}
+  REMINDER_DEMO_ENABLED: ${REMINDER_DEMO_ENABLED:-false}
+  SESSION_SECRET: ${SESSION_SECRET:-}
+
 services:
-  backend:
+  db:
+    image: postgres:16.11-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  init:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    environment:
-      APP_ENV: development
-      DATABASE_URL: sqlite:///./data/delo.db
-      FRONTEND_URL: http://localhost:5173
-      CORS_ORIGINS: http://localhost:5173
-      USE_MOCK_MAX: "true"
-    volumes:
-      - ./runtime:/app/data
+    image: delo-backend:local
+    command: ["sh", "-c", "alembic upgrade head && python -m app.init"]
+    environment: *app-env
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backend:
+    image: delo-backend:local
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment: *app-env
     ports: ["8000:8000"]
+    depends_on:
+      init:
+        condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/live')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready')"]
       interval: 10s
       timeout: 3s
       retries: 5
+
+  worker:
+    image: delo-backend:local
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["python", "-m", "app.worker"]
+    environment: *app-env
+    depends_on:
+      init:
+        condition: service_completed_successfully
+
   frontend:
     build: ./frontend
-    environment:
-      VITE_API_URL: http://localhost:8000/api/v1
-    ports: ["5173:5173"]
+    ports: ["5173:80"]
     depends_on:
       backend:
         condition: service_healthy
+
+  frontend-build:
+    profiles: ["test"]
+    build:
+      context: ./frontend
+      target: builder
+    command: ["pnpm", "run", "build"]
+
+volumes:
+  db_data:

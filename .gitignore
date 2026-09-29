@@ -9,3 +9,5 @@ dist/
 .pnpm-store/
 *.egg-info/
 *.tsbuildinfo
+frontend/test-results/
+frontend/playwright-report/
