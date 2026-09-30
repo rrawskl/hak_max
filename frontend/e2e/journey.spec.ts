@@ -36,7 +36,7 @@ test('profile → catalogue → plan → saved checklist across widths', async (
   await expect(page.getByText('100% выполнено')).toBeVisible();
   await page.reload();
   await expect(page.getByRole('checkbox', { name: 'Описание запроса' })).toBeChecked();
-  for (const width of [360, 390, 480, 768, 1366, 1920]) {
+  for (const width of [360, 390, 480, 768, 1024, 1366, 1920]) {
     await page.setViewportSize({ width, height: 900 });
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     expect(overflow, `horizontal overflow at ${width}px`).toBe(false);
@@ -62,6 +62,21 @@ test('filters survive detail navigation; draft survives resize; API error can be
   await page.unroute('**/api/v1/dashboard');
   await page.getByRole('button', { name: 'Повторить' }).click();
   await expect(page.getByRole('heading', { name: /Здравствуйте/ })).toBeVisible();
+});
+
+test('tablet catalogue and details use the full reading width', async ({ page }) => {
+  for (const width of [768, 1024]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/support');
+    await expect(page.getByLabel('Поиск')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Учебная консультационная поддержка' })).toBeVisible();
+    await page.locator('article').filter({ hasText: 'Учебная консультационная поддержка' }).getByRole('link', { name: 'Подробнее' }).click();
+    await expect(page.getByRole('heading', { name: 'Учебная консультационная поддержка' })).toBeVisible();
+    await expect(page.getByLabel('Поиск')).toBeHidden();
+    const cardWidth = await page.locator('article').last().evaluate(element => element.getBoundingClientRect().width);
+    expect(cardWidth).toBeGreaterThan(width * 0.6);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
+  }
 });
 
 test('program-specific answer changes matching without a percentage', async ({ page }) => {

@@ -119,8 +119,8 @@ function Support() {
   useEffect(() => { if (!id && supportScroll) requestAnimationFrame(() => window.scrollTo(0, supportScroll)); }, [id]);
   function update(key: string, value: string) { const copy = new URLSearchParams(params); value ? copy.set(key, value) : copy.delete(key); setParams(copy); }
   return <section>
-    <PageHeader title="Поддержка" subtitle="Выберите программу и проверьте условия" />
-    <div className={styles.filters}>
+    <PageHeader title="Поддержка" subtitle={id ? 'Условия программы и план подготовки' : 'Выберите программу и проверьте условия'} />
+    <div className={`${styles.filters} ${id ? styles.hiddenOnDetail : ''}`}>
       <label>Поиск<input value={search} onChange={event => update('search', event.target.value)} placeholder="Название программы" /></label>
       <label>Статус<select value={status} onChange={event => update('status', event.target.value)}><option value="">Все</option><option value="preliminary_match">Предварительно подходит</option><option value="check_needed">Нужно уточнить</option><option value="not_eligible">Не подходит</option><option value="closed">Закрыт</option></select></label>
       <label>Цель<select value={purpose} onChange={event => update('purpose', event.target.value)}><option value="">Все цели</option><option value="equipment">Оборудование</option><option value="development">Развитие</option><option value="digital">Цифровизация</option></select></label>

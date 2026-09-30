@@ -8,8 +8,8 @@
 | Миграция и seed | `python -m alembic upgrade head`, `SEED_DEMO=true` и `python -m app.seed` с локальным SQLite | Успешно; 8 программ и один демопрофиль, повторный запуск не перезаписал данные |
 | Frontend unit | `cd frontend; pnpm test` | 1 passed |
 | TypeScript и сборка | `cd frontend; pnpm run build` | Успешно за 1,0 с; Vite предупреждает о директивах `use client` зависимостей |
-| Playwright | `$env:PLAYWRIGHT_CHANNEL='msedge'; pnpm run test:e2e` на локально запущенных backend/Vite | 4 passed (повторный прогон 10,4 с); путь, фильтры/resize, уточнение условия, диалог и фокус |
-| Адаптивность | Playwright, CSS viewport 360/390/480/768/1366/1920px | На странице плана горизонтальной прокрутки нет |
+| Playwright | `$env:PLAYWRIGHT_CHANNEL='msedge'; pnpm run test:e2e` на локально запущенных backend/Vite | 5 passed за 11,1 с; путь, фильтры/resize, планшетный каталог и детали, уточнение условия, диалог и фокус |
+| Адаптивность | Playwright, CSS viewport 360/390/480/768/1024/1366/1920px; визуальная проверка 390/768/1024px | На странице плана нет горизонтальной прокрутки; на планшете каталог и детали используют полную ширину, элементы и нижняя навигация не перекрывают рабочую область |
 | Ручной путь | Браузер: профиль, учебная программа с unknown, создание плана, пункт, reload | Сохранение подтверждено; desktop и mobile визуально осмотрены |
 | Worker mock | Кнопка тестового напоминания, проверка SQLite после +60 секунд | `pending → simulated`; реальной отправки MAX не было |
 | Compose YAML | PyYAML parse | 6 сервисов распознаны |

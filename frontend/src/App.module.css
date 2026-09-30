@@ -93,6 +93,12 @@
 .dialog::backdrop { background: #13234475; }
 .dialog h2 { margin-top: 0; }
 .boot { max-width: 640px; margin: 10vh auto; padding: 24px; }
+@media (max-width: 1199px) {
+  .supportGrid { grid-template-columns: 1fr; }
+  .programDetail { position: static; }
+  .supportGrid:not(.hasDetail) .programDetail { display: none; }
+  .hasDetail .programList, .hiddenOnDetail { display: none; }
+}
 @media (max-width: 1023px) {
   .sidebar { display: none; }
   .mobileBrand { display: inline; color: var(--accent); font-size: 23px; font-weight: 800; text-decoration: none; }
@@ -100,10 +106,6 @@
   .main { padding: 24px 24px 110px; }
   .mobileNav { display: flex; position: fixed; z-index: 5; bottom: 0; left: 0; right: 0; justify-content: space-around; padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); background: white; border-top: 1px solid var(--border); }
   .mobileNav a { min-width: 72px; justify-content: center; min-height: 48px; padding: 8px; font-size: 13px; }
-  .supportGrid { grid-template-columns: 1fr; }
-  .programDetail { position: static; }
-  .supportGrid:not(.hasDetail) .programDetail { display: none; }
-  .hasDetail .programList { display: none; }
   .filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 639px) {
