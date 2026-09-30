@@ -1,14 +1,15 @@
 schemaVersion: "1.0"
-# Черновик: точная схема организаторов и публичный HTTPS URL не предоставлены.
-status: "draft"
+# Структурный шаблон: адрес, данные и доступы для реального теста ещё не выданы.
+# maxInitData, runId и planDueAt передаются проверяющей системе закрытым каналом.
+# Не помещать токены и подписанный initData в Git.
 
 solution:
   name: "ДЕЛО"
-  teamId: "replace-before-submission"
+  # Указать teamId после выдачи организаторами.
 
 api:
-  # Не отправлять на проверку до замены фактическим HTTPS URL.
-  baseUrl: "https://REPLACE-WITH-ACTUAL-HOST"
+  # Зарезервированный пример. Перед сдачей заменить реальным публичным HTTPS URL.
+  baseUrl: "https://api.example.org"
   openapi: "./openapi.yaml"
   defaultHeaders:
     Accept: "application/json"
@@ -27,15 +28,229 @@ checks:
     timeoutMs: 5000
     repeatable: true
 
-  - id: "demo-session"
-    name: "Получение demo сессии"
-    description: "Только development с DEV_AUTH_ENABLED=true; исключить из production проверки."
-    method: "POST"
-    path: "/api/v1/auth/demo"
+  - id: "ready-health"
+    name: "База данных и миграция готовы"
+    method: "GET"
+    path: "/health/ready"
     role: "public"
     expected:
       statusCodes: [200]
       contentType: "application/json"
-      requiredFields: ["token", "mode", "expires_at"]
+      requiredFields: ["status"]
     timeoutMs: 5000
     repeatable: true
+
+  - id: "forged-auth-rejected"
+    name: "Поддельный запуск MAX отклонён"
+    method: "POST"
+    path: "/api/v1/auth/max"
+    role: "public"
+    request:
+      headers:
+        Content-Type: "application/json"
+      body:
+        init_data: "auth_date=1&user=%7B%22id%22%3A1%7D&hash=forged"
+    expected:
+      statusCodes: [401]
+      contentType: "application/json"
+      requiredFields: ["error", "request_id"]
+    timeoutMs: 5000
+    repeatable: true
+
+  - id: "max-session"
+    name: "Подписанный запуск создаёт сессию"
+    method: "POST"
+    path: "/api/v1/auth/max"
+    role: "public"
+    dependsOn: ["ready-health"]
+    request:
+      headers:
+        Content-Type: "application/json"
+      body:
+        init_data: "${maxInitData}"
+    expected:
+      statusCodes: [200]
+      contentType: "application/json"
+      requiredFields: ["token", "expires_at", "mode"]
+    timeoutMs: 5000
+    repeatable: true
+    extract:
+      sessionToken: "$.token"
+
+  - id: "current-user"
+    name: "Сессия принадлежит тестовому пользователю"
+    method: "GET"
+    path: "/api/v1/me"
+    role: "max-user"
+    dependsOn: ["max-session"]
+    request:
+      headers:
+        Authorization: "Bearer ${sessionToken}"
+    expected:
+      statusCodes: [200]
+      contentType: "application/json"
+      requiredFields: ["id", "mode", "bot_started"]
+    timeoutMs: 5000
+    repeatable: true
+
+  - id: "saved-profile"
+    name: "Сохранённый профиль загружен"
+    method: "GET"
+    path: "/api/v1/profile"
+    role: "max-user"
+    dependsOn: ["max-session"]
+    request:
+      headers:
+        Authorization: "Bearer ${sessionToken}"
+    expected:
+      statusCodes: [200]
+      contentType: "application/json"
+      requiredFields: ["business_name", "version", "updated_at"]
+    timeoutMs: 5000
+    repeatable: true
+
+  - id: "catalogue"
+    name: "Каталог возвращает подбор"
+    method: "GET"
+    path: "/api/v1/programs"
+    role: "max-user"
+    dependsOn: ["saved-profile"]
+    request:
+      headers:
+        Authorization: "Bearer ${sessionToken}"
+    expected:
+      statusCodes: [200]
+      contentType: "application/json"
+      bodySchema:
+        type: "array"
+        minItems: 1
+    timeoutMs: 5000
+    repeatable: true
+    extract:
+      programId: "$[0].id"
+
+  - id: "program-details"
+    name: "Программа содержит условия и источник"
+    method: "GET"
+    path: "/api/v1/programs/{program_id}"
+    role: "max-user"
+    dependsOn: ["catalogue"]
+    request:
+      path:
+        program_id: "${programId}"
+      headers:
+        Authorization: "Bearer ${sessionToken}"
+    expected:
+      statusCodes: [200]
+      contentType: "application/json"
+      requiredFields: ["id", "match", "provenance", "rules", "documents"]
+    timeoutMs: 5000
+    repeatable: true
+
+  - id: "create-plan"
+    name: "Создание плана с чек-листом"
+    method: "POST"
+    path: "/api/v1/plans"
+    role: "max-user"
+    dependsOn: ["program-details"]
+    request:
+      headers:
+        Authorization: "Bearer ${sessionToken}"
+        Content-Type: "application/json"
+        Idempotency-Key: "data-api-${runId}"
+      body:
+        program_id: "${programId}"
+        due_at: "${planDueAt}"
+        reminders_enabled: false
+    expected:
+      statusCodes: [201]
+      contentType: "application/json"
+      requiredFields: ["id", "version", "items", "program_snapshot"]
+    timeoutMs: 5000
+    repeatable: false
+    extract:
+      planId: "$.id"
+      planVersion: "$.version"
+      firstItemId: "$.items[0].id"
+
+  - id: "saved-plan"
+    name: "План читается после создания"
+    method: "GET"
+    path: "/api/v1/plans/{plan_id}"
+    role: "max-user"
+    dependsOn: ["create-plan"]
+    request:
+      path:
+        plan_id: "${planId}"
+      headers:
+        Authorization: "Bearer ${sessionToken}"
+    expected:
+      statusCodes: [200]
+      contentType: "application/json"
+      requiredFields: ["id", "status", "items", "progress"]
+    timeoutMs: 5000
+    repeatable: true
+
+  - id: "complete-checklist-item"
+    name: "Отметка пункта меняет версию плана"
+    method: "PATCH"
+    path: "/api/v1/plans/{plan_id}/items/{item_id}"
+    role: "max-user"
+    dependsOn: ["saved-plan"]
+    request:
+      path:
+        plan_id: "${planId}"
+        item_id: "${firstItemId}"
+      headers:
+        Authorization: "Bearer ${sessionToken}"
+        Content-Type: "application/json"
+      body:
+        version: "${planVersion}"
+        status: "done"
+    expected:
+      statusCodes: [200]
+      contentType: "application/json"
+      requiredFields: ["id", "version", "progress"]
+    timeoutMs: 5000
+    repeatable: false
+    extract:
+      finalPlanVersion: "$.version"
+
+  - id: "plan-notifications"
+    name: "Статусы уведомлений доступны владельцу"
+    method: "GET"
+    path: "/api/v1/plans/{plan_id}/notifications"
+    role: "max-user"
+    dependsOn: ["create-plan"]
+    request:
+      path:
+        plan_id: "${planId}"
+      headers:
+        Authorization: "Bearer ${sessionToken}"
+    expected:
+      statusCodes: [200]
+      contentType: "application/json"
+      bodySchema:
+        type: "array"
+    timeoutMs: 5000
+    repeatable: true
+
+cleanup:
+  # Отменяет активный план. Историческая запись остаётся до удаления
+  # тестового аккаунта по процедуре владельца сервиса.
+  - id: "cancel-test-plan"
+    method: "PATCH"
+    path: "/api/v1/plans/{plan_id}"
+    role: "max-user"
+    request:
+      path:
+        plan_id: "${planId}"
+      headers:
+        Authorization: "Bearer ${sessionToken}"
+        Content-Type: "application/json"
+      body:
+        version: "${finalPlanVersion}"
+        status: "cancelled"
+    expected:
+      statusCodes: [200]
+    timeoutMs: 5000

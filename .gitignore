@@ -11,3 +11,6 @@ dist/
 *.tsbuildinfo
 frontend/test-results/
 frontend/playwright-report/
+.reference/
+.tmp_cloud.html
+/delivery/

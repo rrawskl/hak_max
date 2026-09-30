@@ -8,19 +8,22 @@
 | Миграция и seed | `python -m alembic upgrade head`, `SEED_DEMO=true` и `python -m app.seed` с локальным SQLite | Успешно; 8 программ и один демопрофиль, повторный запуск не перезаписал данные |
 | Frontend unit | `cd frontend; pnpm test` | 1 passed |
 | TypeScript и сборка | `cd frontend; pnpm run build` | Успешно за 1,0 с; Vite предупреждает о директивах `use client` зависимостей |
-| Playwright | `$env:PLAYWRIGHT_CHANNEL='msedge'; pnpm run test:e2e` на локально запущенных backend/Vite | 4 passed за 6,8 с; путь, фильтры/resize, уточнение условия, диалог и фокус |
+| Playwright | `$env:PLAYWRIGHT_CHANNEL='msedge'; pnpm run test:e2e` на локально запущенных backend/Vite | 4 passed (повторный прогон 10,4 с); путь, фильтры/resize, уточнение условия, диалог и фокус |
 | Адаптивность | Playwright, CSS viewport 360/390/480/768/1366/1920px | На странице плана горизонтальной прокрутки нет |
 | Ручной путь | Браузер: профиль, учебная программа с unknown, создание плана, пункт, reload | Сохранение подтверждено; desktop и mobile визуально осмотрены |
 | Worker mock | Кнопка тестового напоминания, проверка SQLite после +60 секунд | `pending → simulated`; реальной отправки MAX не было |
 | Compose YAML | PyYAML parse | 6 сервисов распознаны |
 | Лицензии | `pnpm licenses list --json`; metadata основных Python-пакетов | Frontend: MIT, Apache-2.0, BSD, ISC, MPL-2.0, CC0, BlueOak; psycopg указывает LGPLv3. Формальное лицензионное заключение не выполнялось |
+| DATA-API 1.0 | `python .reference/example-data-api/validate_data_api.py DATA-API.yaml --schema .reference/example-data-api/Example/DATA-API.schema.json --openapi openapi.yaml` | Код 0: схема, семантика и пути OpenAPI проходят. Предупреждения об `maxInitData`, `planDueAt`, `runId`: эти значения должны поступить закрытым каналом и не предоставлены |
+| DATA-API HTTP smoke | Локальный backend: `GET /health/live`, `GET /health/ready`, `POST /api/v1/auth/max` с заведомо неверной подписью | 200, 200, 401; JSON-ответы соответствуют соответствующим проверкам DATA-API |
+| Общий FAQ | Прочитан весь публичный PDF, 3 страницы | Уточнены привязка Mini App организаторами, GET `/me` для имени бота, Docker, DATA-API и требование доступности после сдачи |
 
 ### Не проверено
 
 - Docker Compose и PostgreSQL: `docker` отсутствует на этой машине. Чистая сборка, миграция и seed в контейнерах, время сборки до 5 минут, рестарт volume не подтверждены.
 - Реальный MAX: не предоставлены bot token, webhook secret, имя бота, привязанный Mini App и публичный HTTPS URL. Подпись проверена unit-тестом по официальной схеме, но запуск в MAX и доставка сообщений не проверены. Mock имеет статус `simulated`.
 - Реальные мобильный MAX и MAX web: протокол с версией клиента и viewport не составлен без доступов. Межустройственный сценарий протестирован на уровне серверной изоляции/сохранения и повторного открытия браузера, не на двух реальных клиентах MAX.
-- Официальный PDF кейса «Эффективный бизнес» не был предоставлен; сверка выполнена с приложенным `DELO_Codex_TZ.md` и актуальной документацией MAX. Финальная схема DATA-API и teamId неизвестны.
+- Официальный PDF кейса «Эффективный бизнес» не был предоставлен; сверка выполнена с приложенным `DELO_Codex_TZ.md`, общим FAQ и документацией MAX. Схема DATA-API 1.0 теперь известна, но teamId и публичный HTTPS URL не предоставлены; автоматический HTTP-прогон DATA-API по реальному серверу не выполнен.
 - Аудит безопасности перед production, реальные 429/timeout ответы MAX, резервное копирование и политика удаления данных требуют отдельной проверки. Mock/контрактные тесты 429 и timeout проходят без подключения к MAX.
 
 ### Известные ограничения

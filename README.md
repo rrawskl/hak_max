@@ -56,10 +56,22 @@ pnpm run test:e2e
 
 Официальный [MAX Bridge](https://dev.max.ru/docs/webapps/bridge) даёт raw `initData`, который backend проверяет по [официальной схеме](https://dev.max.ru/docs/webapps/validation) и времени выдачи. На клиенте токен сессии хранится только в памяти. Webhook принимает события после проверки заголовка `X-Max-Bot-Api-Secret`; подписка на него настраивается владельцем через [MAX API](https://dev.max.ru/docs-api/methods/POST/subscriptions). Реальная отправка использует [POST /messages](https://dev.max.ru/docs-api/methods/POST/messages). Не включайте polling одновременно с webhook.
 
-Для production нужны зарегистрированный бот и Mini App, публичный HTTPS-домен с сертификатом, `MAX_TOKEN`, `MAX_BOT_NAME`, `MAX_WEBHOOK_SECRET`, `SESSION_SECRET`, точные HTTPS `PUBLIC_APP_URL`/`CORS_ORIGINS`, PostgreSQL и проверенный каталог из официальных источников. Установите `APP_ENV=production`, `USE_MOCK_MAX=false`, `DEV_AUTH_ENABLED=false`, `SEED_DEMO=false`. Приложение остановится при включённом demo или отсутствующих секретах. Synthetic-каталог в production API скрыт.
+Для запуска в рамках хакатона используйте **выданного организаторами бота**. Если есть только токен, узнайте его `username` запросом `GET https://platform-api2.max.ru/me` с заголовком `Authorization: <токен>` и укажите его в `MAX_BOT_NAME`. Не меняйте имя, ник или логотип выданного бота: согласно [общему FAQ](https://cloud.mail.ru/public/THoi/7pmGKgDYK) на онлайн-этапе это недоступно.
+
+Разместите frontend и backend по публичному HTTPS-адресу. Ссылку Mini App передайте через [форму организаторов](https://sbor-ssylok-dlya-mini-prilojeniy.testograf.ru/); привязку к выданному боту выполняют они. Регистрироваться в «MAX для партнёров» для этого сценария не требуется. Для webhook настройте HTTPS endpoint через MAX API. Локальный `localhost` проверяет интерфейс и логику, но для теста внутри MAX нужен привязанный публичный адрес. После сдачи бот и приложение должны оставаться доступными на весь период проверки.
+
+Для production также нужны `MAX_TOKEN`, `MAX_WEBHOOK_SECRET`, `SESSION_SECRET`, точные HTTPS `PUBLIC_APP_URL`/`CORS_ORIGINS`, PostgreSQL и проверенный каталог из официальных источников. Установите `APP_ENV=production`, `USE_MOCK_MAX=false`, `DEV_AUTH_ENABLED=false`, `SEED_DEMO=false`. Приложение остановится при включённом demo или отсутствующих секретах. Synthetic-каталог в production API скрыт. Административные настройки выданного бота меняют только организаторы; для недоступного через API действия обращайтесь к ним.
 
 ## Данные и ограничения
 
 В БД хранятся MAX user ID, минимальное имя, профиль, планы, чек-листы, сессии и очередь уведомлений. Сессия живёт 2 часа. Сведения нужны только для персонального плана; хранение и удаление по запросу владельца требуют операционного процесса до пилота. Сканы, паспорт, банковские данные и заявки не хранятся. Статус `sent` означает принятие сообщения API MAX, не прочтение или доставку адресату. После сетевого тайм-аута возможен статус `uncertain`; без подтверждённой внешней идемпотентности нельзя обещать exactly-once.
 
-Спецификация [OpenAPI](openapi.yaml) сгенерирована из FastAPI. [DATA-API.yaml](DATA-API.yaml) — черновик до получения точной схемы организаторов и публичного URL. Архитектура, сценарий и происхождение демоданных описаны в `docs/`.
+Спецификация [OpenAPI](openapi.yaml) сгенерирована из FastAPI. [DATA-API.yaml](DATA-API.yaml) соответствует присланной [схеме DATA-API 1.0](https://gitverse.ru/stasnorman/example-data-api), но остаётся **шаблоном для сдачи**: `api.baseUrl` указывает на зарезервированный `api.example.org`, `teamId` не выдан, а подписанный `maxInitData`, `runId` и будущий `planDueAt` должны поступить проверяющей системе закрытым каналом. Тестовый MAX-пользователь должен иметь сохранённый профиль; каталог должен содержать хотя бы одну открытую подходящую программу с документом. Не отправляйте этот файл на проверку до заполнения реального адреса и тестовых данных. Архитектура, сценарий и происхождение демоданных описаны в `docs/`.
+
+Проверка формата DATA-API из корня проекта (инструмент организаторов скачивается в игнорируемую папку):
+
+```powershell
+git clone --depth 1 https://gitverse.ru/stasnorman/example-data-api.git .reference/example-data-api
+python -m pip install -r .reference/example-data-api/requirements.txt
+python .reference/example-data-api/validate_data_api.py DATA-API.yaml --schema .reference/example-data-api/Example/DATA-API.schema.json --openapi openapi.yaml
+```
