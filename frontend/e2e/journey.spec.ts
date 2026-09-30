@@ -71,9 +71,11 @@ test('tablet catalogue and details use the full reading width', async ({ page })
     await expect(page.getByLabel('Поиск')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Учебная консультационная поддержка' })).toBeVisible();
     await page.locator('article').filter({ hasText: 'Учебная консультационная поддержка' }).getByRole('link', { name: 'Подробнее' }).click();
+    const back = page.getByRole('button', { name: '← К каталогу' });
+    await expect(back).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Учебная консультационная поддержка' })).toBeVisible();
     await expect(page.getByLabel('Поиск')).toBeHidden();
-    const cardWidth = await page.locator('article').last().evaluate(element => element.getBoundingClientRect().width);
+    const cardWidth = await page.locator('article').filter({ has: back }).evaluate(element => element.getBoundingClientRect().width);
     expect(cardWidth).toBeGreaterThan(width * 0.6);
     expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)).toBe(false);
   }
